@@ -2,11 +2,10 @@
 
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Shield } from "lucide-react"
 import { Button } from "./ui/button"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import Image from "next/image"
 
 interface HeaderProps {
   rightLogos?: string[]
@@ -15,8 +14,8 @@ interface HeaderProps {
 export default function Header({ rightLogos = [] }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
-  const [canViewUsers, setCanViewUsers] = useState(true) // Default to true for demo
-  const [canViewCountyConfig, setCanViewCountyConfig] = useState(true) // Added state to track County Config view permission
+  const [canViewUsers, setCanViewUsers] = useState(true)
+  const [canViewCountyConfig, setCanViewCountyConfig] = useState(true)
 
   useEffect(() => {
     const checkPermissions = () => {
@@ -29,7 +28,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
         const countyConfigPermission = permissions.find(
           (p: any) => p.userId === "1" && p.reportType === "county-config",
         )
-        setCanViewCountyConfig(countyConfigPermission?.canView || false) // Check County Config view permission
+        setCanViewCountyConfig(countyConfigPermission?.canView || false)
       }
     }
 
@@ -44,7 +43,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
     { href: "/documents", label: "Documents" },
     ...(canViewUsers ? [{ href: "/users", label: "Users" }] : []),
     { href: "/access-control", label: "Access Control" },
-    ...(canViewCountyConfig ? [{ href: "/county-config", label: "County Config" }] : []), // Conditionally include County Config link based on permissions
+    ...(canViewCountyConfig ? [{ href: "/county-config", label: "County Config" }] : []),
   ]
 
   return (
@@ -54,13 +53,9 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
           {/* Left side - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/api-attachments/v25O0W5TGrTkd422C6ZK2-F9uigLzXl6lWPgIbdq8rjbENm1QkY2.png"
-                alt="Pennsylvania State Seal"
-                width={40}
-                height={40}
-                className="object-contain"
-              />
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
               <div className="flex flex-col">
                 <span className="text-xl font-bold text-gray-900 dark:text-white">CJAB</span>
                 <span className="text-xs text-gray-600 dark:text-gray-400">Criminal Justice Advisory Board</span>

@@ -1,8 +1,7 @@
 "use client"
 
 import { Card, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { FileText, Users, Database, Brain, Settings, Lock, FileCheck, FolderOpen } from "lucide-react"
-import Image from "next/image"
+import { FileText, Users, Database, Brain, Settings, Lock, FileCheck, FolderOpen, Shield } from "lucide-react"
 
 export default function Home() {
   return (
@@ -11,13 +10,9 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
-            <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/api-attachments/v25O0W5TGrTkd422C6ZK2-F9uigLzXl6lWPgIbdq8rjbENm1QkY2.png"
-              alt="Pennsylvania State Seal"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
+            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <Shield className="w-12 h-12 text-white" />
+            </div>
           </div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 text-balance">
             Criminal Justice Advisory Board
