@@ -4,13 +4,21 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Moon, Sun, Shield } from "lucide-react"
 import { Button } from "./ui/button"
+import { usePathname } from "next/navigation"
 
 interface HeaderProps {
-  rightLogos?: string[] // Array of logo URLs (0, 1, or 2 logos)
+  rightLogos?: string[]
 }
 
 export default function Header({ rightLogos = [] }: HeaderProps) {
   const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/county-config", label: "County Config" },
+    { href: "/documents", label: "Documents" },
+  ]
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -29,7 +37,21 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
             </Link>
           </div>
 
-          {/* Center - Navigation */}
+          <nav className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname === link.href
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
           {/* Right side - Optional logos and theme toggle */}
           <div className="flex items-center space-x-4">
@@ -45,7 +67,6 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Mobile menu button */}
             <button className="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -54,9 +75,22 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
           </div>
         </div>
 
-        {/* Mobile navigation menu */}
         <div className="md:hidden border-t border-gray-200 dark:border-gray-700 pt-4 pb-3">
-          <div className="flex flex-col space-y-1">{/* Removed mobile navigation links as requested */}</div>
+          <div className="flex flex-col space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-2 rounded-md text-base font-medium ${
+                  pathname === link.href
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </header>
