@@ -15,7 +15,7 @@ export default function Home() {
             </div>
           </div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 text-balance">
-            Criminal Justice Application Backend
+            Criminal Justice Advisory Board
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-pretty">
             Secure document management system with role-based access control, AI-powered summarization, and dynamic

@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "CJAB - Criminal Justice Application Backend",
+  title: "CJAB - Criminal Justice Advisory Board",
   description:
     "Secure document management system for criminal justice with role-based access control and AI-powered summarization",
 }

@@ -16,7 +16,7 @@ export default function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="text-lg font-bold">CJAB</span>
-                <span className="text-xs text-gray-400">Criminal Justice Application Backend</span>
+                <span className="text-xs text-gray-400">Criminal Justice Advisory Board</span>
               </div>
             </div>
 

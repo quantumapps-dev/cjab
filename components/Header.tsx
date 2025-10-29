@@ -34,7 +34,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-xl font-bold text-gray-900 dark:text-white">CJAB</span>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Criminal Justice Application Backend</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Criminal Justice Advisory Board</span>
               </div>
             </Link>
           </div>
