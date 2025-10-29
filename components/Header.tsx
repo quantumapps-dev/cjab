@@ -16,6 +16,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/users", label: "Users" },
     { href: "/county-config", label: "County Config" },
     { href: "/access-control", label: "Access Control" },
     { href: "/documents", label: "Documents" },
