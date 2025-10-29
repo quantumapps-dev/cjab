@@ -1,7 +1,8 @@
 "use client"
 
 import { Card, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { FileText, Shield, Users, Database, Brain, Settings, Lock, FileCheck, FolderOpen } from "lucide-react"
+import { FileText, Users, Database, Brain, Settings, Lock, FileCheck, FolderOpen } from "lucide-react"
+import Image from "next/image"
 
 export default function Home() {
   return (
@@ -10,9 +11,13 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Shield className="w-12 h-12 text-white" />
-            </div>
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/api-attachments/v25O0W5TGrTkd422C6ZK2-F9uigLzXl6lWPgIbdq8rjbENm1QkY2.png"
+              alt="Pennsylvania State Seal"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
           </div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 text-balance">
             Criminal Justice Advisory Board
@@ -38,7 +43,7 @@ export default function Home() {
           <Card className="hover:shadow-lg transition-shadow border-0 shadow-md">
             <CardHeader>
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-3">
-                <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <Lock className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <CardTitle className="text-lg">Role-Based Access</CardTitle>
               <CardDescription>Granular permissions with module and record-level control</CardDescription>
@@ -127,7 +132,7 @@ export default function Home() {
             <div className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
