@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter, Calendar, User, Trash2 } from "lucide-react"
+import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter, Calendar, User, Trash2, Eye } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -650,7 +650,7 @@ export default function DocumentsPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Button variant="outline" size="sm">
-                                View
+                                <Eye className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
