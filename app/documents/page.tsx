@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter, Calendar, User } from "lucide-react"
+import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter, Calendar, User, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -14,6 +14,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useForm } from "react-hook-form"
@@ -76,6 +86,8 @@ export default function DocumentsPage() {
   const [selectedReportType, setSelectedReportType] = useState<string | null>(null)
   const [selectedCourt, setSelectedCourt] = useState<CourtFolder | null>(null)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [documents, setDocuments] = useState<Document[]>([
     {
@@ -103,7 +115,6 @@ export default function DocumentsPage() {
     resolver: zodResolver(socialSummaryUploadSchema),
   })
 
-  // Mock data for courts
   const courts: CourtFolder[] = [
     { id: "1", name: "Magisterial District Court 15-1-01", districtNumber: "15-1-01", documentCount: 12 },
     { id: "2", name: "Magisterial District Court 15-1-02", districtNumber: "15-1-02", documentCount: 8 },
@@ -116,7 +127,7 @@ export default function DocumentsPage() {
       name: file.name,
       type: file.type,
       uploadedAt: new Date(),
-      uploadedBy: "Current User", // In real app, get from auth context
+      uploadedBy: "Current User",
       size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
       description: data.description,
       sentenceDate: data.sentenceDate,
@@ -164,6 +175,20 @@ export default function DocumentsPage() {
     toast.success("Social Summary Report uploaded successfully")
     setIsUploadDialogOpen(false)
     socialSummaryForm.reset()
+  }
+
+  const handleDeleteDocument = (docId: string) => {
+    setDocumentToDelete(docId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (documentToDelete) {
+      setDocuments(documents.filter((doc) => doc.id !== documentToDelete))
+      toast.success("Document deleted successfully")
+      setDeleteDialogOpen(false)
+      setDocumentToDelete(null)
+    }
   }
 
   const renderBreadcrumb = () => {
@@ -350,7 +375,6 @@ export default function DocumentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -387,7 +411,6 @@ export default function DocumentsPage() {
             )}
           </div>
 
-          {/* Search and Filter */}
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -405,12 +428,9 @@ export default function DocumentsPage() {
           </div>
         </div>
 
-        {/* Breadcrumb */}
         {renderBreadcrumb()}
 
-        {/* Main Content */}
         {!selectedReportType ? (
-          // Report Type Selection
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card
               className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-500"
@@ -474,7 +494,6 @@ export default function DocumentsPage() {
             </Card>
           </div>
         ) : selectedReportType === "Bail Reports" && !selectedCourt ? (
-          // Court Folder Selection for Bail Reports
           <div>
             <Card className="mb-6 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950">
               <CardContent className="pt-6">
@@ -629,9 +648,19 @@ export default function DocumentsPage() {
                           </TableCell>
                           <TableCell className="text-sm">{doc.size}</TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm">
-                              View
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" size="sm">
+                                View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -643,6 +672,23 @@ export default function DocumentsPage() {
           </Card>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this document? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
