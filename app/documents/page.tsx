@@ -1,12 +1,10 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter } from "lucide-react"
+import { Folder, FileText, Upload, ChevronRight, Home, Search, Filter, Calendar, User } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -18,13 +16,53 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+
+const psiUploadSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  sentenceDate: z.string().min(1, "Sentence date is required"),
+  docketNumber: z.string().min(1, "Docket number is required"),
+  file: z.any().refine((files) => files?.length > 0, "File is required"),
+})
+
+const bailUploadSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  hearingDate: z.string().min(1, "Hearing date is required"),
+  otn: z.string().min(1, "OTN is required"),
+  file: z.any().refine((files) => files?.length > 0, "File is required"),
+})
+
+const socialSummaryUploadSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  dispositionDate: z.string().min(1, "Disposition date is required"),
+  docketNumber: z.string().min(1, "Docket number is required"),
+  file: z.any().refine((files) => files?.length > 0, "File is required"),
+})
+
+type PSIUploadForm = z.infer<typeof psiUploadSchema>
+type BailUploadForm = z.infer<typeof bailUploadSchema>
+type SocialSummaryUploadForm = z.infer<typeof socialSummaryUploadSchema>
 
 interface Document {
   id: string
   name: string
   type: string
   uploadedAt: Date
+  uploadedBy: string
   size: string
+  description: string
+  // PSI specific
+  sentenceDate?: string
+  docketNumber?: string
+  // Bail specific
+  hearingDate?: string
+  otn?: string
+  // Social Summary specific
+  dispositionDate?: string
 }
 
 interface CourtFolder {
@@ -39,6 +77,31 @@ export default function DocumentsPage() {
   const [selectedCourt, setSelectedCourt] = useState<CourtFolder | null>(null)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [documents, setDocuments] = useState<Document[]>([
+    {
+      id: "1",
+      name: "Bail_Report_2024_001.pdf",
+      type: "PDF",
+      uploadedAt: new Date("2024-01-15"),
+      uploadedBy: "John Smith",
+      size: "2.4 MB",
+      description: "Bail report for case involving theft charges",
+      hearingDate: "2024-02-01",
+      otn: "OTN-2024-001234",
+    },
+  ])
+
+  const psiForm = useForm<PSIUploadForm>({
+    resolver: zodResolver(psiUploadSchema),
+  })
+
+  const bailForm = useForm<BailUploadForm>({
+    resolver: zodResolver(bailUploadSchema),
+  })
+
+  const socialSummaryForm = useForm<SocialSummaryUploadForm>({
+    resolver: zodResolver(socialSummaryUploadSchema),
+  })
 
   // Mock data for courts
   const courts: CourtFolder[] = [
@@ -46,18 +109,61 @@ export default function DocumentsPage() {
     { id: "2", name: "Magisterial District Court 15-1-02", districtNumber: "15-1-02", documentCount: 8 },
   ]
 
-  // Mock documents
-  const documents: Document[] = [
-    { id: "1", name: "Bail_Report_2024_001.pdf", type: "PDF", uploadedAt: new Date(), size: "2.4 MB" },
-    { id: "2", name: "Bail_Report_2024_002.pdf", type: "PDF", uploadedAt: new Date(), size: "1.8 MB" },
-  ]
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files && files.length > 0) {
-      toast.success(`${files.length} file(s) uploaded successfully`)
-      setIsUploadDialogOpen(false)
+  const handlePSIUpload = (data: PSIUploadForm) => {
+    const file = data.file[0]
+    const newDoc: Document = {
+      id: Date.now().toString(),
+      name: file.name,
+      type: file.type,
+      uploadedAt: new Date(),
+      uploadedBy: "Current User", // In real app, get from auth context
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      description: data.description,
+      sentenceDate: data.sentenceDate,
+      docketNumber: data.docketNumber,
     }
+    setDocuments([...documents, newDoc])
+    toast.success("PSI Report uploaded successfully")
+    setIsUploadDialogOpen(false)
+    psiForm.reset()
+  }
+
+  const handleBailUpload = (data: BailUploadForm) => {
+    const file = data.file[0]
+    const newDoc: Document = {
+      id: Date.now().toString(),
+      name: file.name,
+      type: file.type,
+      uploadedAt: new Date(),
+      uploadedBy: "Current User",
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      description: data.description,
+      hearingDate: data.hearingDate,
+      otn: data.otn,
+    }
+    setDocuments([...documents, newDoc])
+    toast.success("Bail Report uploaded successfully")
+    setIsUploadDialogOpen(false)
+    bailForm.reset()
+  }
+
+  const handleSocialSummaryUpload = (data: SocialSummaryUploadForm) => {
+    const file = data.file[0]
+    const newDoc: Document = {
+      id: Date.now().toString(),
+      name: file.name,
+      type: file.type,
+      uploadedAt: new Date(),
+      uploadedBy: "Current User",
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      description: data.description,
+      dispositionDate: data.dispositionDate,
+      docketNumber: data.docketNumber,
+    }
+    setDocuments([...documents, newDoc])
+    toast.success("Social Summary Report uploaded successfully")
+    setIsUploadDialogOpen(false)
+    socialSummaryForm.reset()
   }
 
   const renderBreadcrumb = () => {
@@ -92,6 +198,155 @@ export default function DocumentsPage() {
     )
   }
 
+  const renderUploadDialog = () => {
+    if (selectedReportType === "PSI Reports") {
+      return (
+        <form onSubmit={psiForm.handleSubmit(handlePSIUpload)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="psi-file">Select File *</Label>
+            <Input id="psi-file" type="file" accept=".pdf,.doc,.docx" {...psiForm.register("file")} />
+            {psiForm.formState.errors.file && (
+              <p className="text-sm text-red-600">{psiForm.formState.errors.file.message as string}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="psi-description">Description *</Label>
+            <Textarea
+              id="psi-description"
+              placeholder="Enter document description"
+              {...psiForm.register("description")}
+            />
+            {psiForm.formState.errors.description && (
+              <p className="text-sm text-red-600">{psiForm.formState.errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="psi-sentence-date">Sentence Date *</Label>
+            <Input id="psi-sentence-date" type="date" {...psiForm.register("sentenceDate")} />
+            {psiForm.formState.errors.sentenceDate && (
+              <p className="text-sm text-red-600">{psiForm.formState.errors.sentenceDate.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="psi-docket">Docket Number *</Label>
+            <Input id="psi-docket" placeholder="Enter docket number" {...psiForm.register("docketNumber")} />
+            {psiForm.formState.errors.docketNumber && (
+              <p className="text-sm text-red-600">{psiForm.formState.errors.docketNumber.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Upload Document</Button>
+          </div>
+        </form>
+      )
+    } else if (selectedReportType === "Bail Reports") {
+      return (
+        <form onSubmit={bailForm.handleSubmit(handleBailUpload)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="bail-file">Select File *</Label>
+            <Input id="bail-file" type="file" accept=".pdf,.doc,.docx" {...bailForm.register("file")} />
+            {bailForm.formState.errors.file && (
+              <p className="text-sm text-red-600">{bailForm.formState.errors.file.message as string}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bail-description">Description *</Label>
+            <Textarea
+              id="bail-description"
+              placeholder="Enter document description"
+              {...bailForm.register("description")}
+            />
+            {bailForm.formState.errors.description && (
+              <p className="text-sm text-red-600">{bailForm.formState.errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bail-hearing-date">Hearing Date *</Label>
+            <Input id="bail-hearing-date" type="date" {...bailForm.register("hearingDate")} />
+            {bailForm.formState.errors.hearingDate && (
+              <p className="text-sm text-red-600">{bailForm.formState.errors.hearingDate.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bail-otn">OTN (Offense Tracking Number) *</Label>
+            <Input id="bail-otn" placeholder="Enter OTN" {...bailForm.register("otn")} />
+            {bailForm.formState.errors.otn && (
+              <p className="text-sm text-red-600">{bailForm.formState.errors.otn.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Upload Document</Button>
+          </div>
+        </form>
+      )
+    } else if (selectedReportType === "Social Summary Reports") {
+      return (
+        <form onSubmit={socialSummaryForm.handleSubmit(handleSocialSummaryUpload)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="social-file">Select File *</Label>
+            <Input id="social-file" type="file" accept=".pdf,.doc,.docx" {...socialSummaryForm.register("file")} />
+            {socialSummaryForm.formState.errors.file && (
+              <p className="text-sm text-red-600">{socialSummaryForm.formState.errors.file.message as string}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="social-description">Description *</Label>
+            <Textarea
+              id="social-description"
+              placeholder="Enter document description"
+              {...socialSummaryForm.register("description")}
+            />
+            {socialSummaryForm.formState.errors.description && (
+              <p className="text-sm text-red-600">{socialSummaryForm.formState.errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="social-disposition-date">Disposition Date *</Label>
+            <Input id="social-disposition-date" type="date" {...socialSummaryForm.register("dispositionDate")} />
+            {socialSummaryForm.formState.errors.dispositionDate && (
+              <p className="text-sm text-red-600">{socialSummaryForm.formState.errors.dispositionDate.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="social-docket">Docket Number *</Label>
+            <Input
+              id="social-docket"
+              placeholder="Enter docket number"
+              {...socialSummaryForm.register("docketNumber")}
+            />
+            {socialSummaryForm.formState.errors.docketNumber && (
+              <p className="text-sm text-red-600">{socialSummaryForm.formState.errors.docketNumber.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Upload Document</Button>
+          </div>
+        </form>
+      )
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -107,7 +362,9 @@ export default function DocumentsPage() {
                 <p className="text-gray-600 dark:text-gray-400">Browse and manage your documents</p>
               </div>
             </div>
-            {selectedCourt && (
+            {(selectedReportType === "PSI Reports" ||
+              selectedReportType === "Social Summary Reports" ||
+              selectedCourt) && (
               <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
@@ -115,18 +372,16 @@ export default function DocumentsPage() {
                     Upload Document
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Upload Document</DialogTitle>
-                    <DialogDescription>Upload a document to {selectedCourt.name}</DialogDescription>
+                    <DialogTitle>Upload {selectedReportType}</DialogTitle>
+                    <DialogDescription>
+                      {selectedCourt
+                        ? `Upload a document to ${selectedCourt.name}`
+                        : `Upload a new ${selectedReportType?.slice(0, -1)}`}
+                    </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="file">Select File</Label>
-                      <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={handleFileUpload} />
-                      <p className="text-xs text-gray-500">Supported formats: PDF, DOC, DOCX</p>
-                    </div>
-                  </div>
+                  <div className="py-4">{renderUploadDialog()}</div>
                 </DialogContent>
               </Dialog>
             )}
@@ -170,7 +425,9 @@ export default function DocumentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">24 documents</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {documents.filter((d) => d.sentenceDate).length} documents
+                  </span>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
               </CardContent>
@@ -208,7 +465,9 @@ export default function DocumentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">18 documents</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {documents.filter((d) => d.dispositionDate).length} documents
+                  </span>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
               </CardContent>
@@ -265,7 +524,6 @@ export default function DocumentsPage() {
             </div>
           </div>
         ) : (
-          // Document List View
           <Card className="shadow-lg border-0">
             <CardHeader className="border-b border-gray-200 dark:border-gray-700">
               <CardTitle>Documents</CardTitle>
@@ -281,28 +539,104 @@ export default function DocumentsPage() {
                   <p className="text-gray-600 dark:text-gray-400 mb-4">Upload your first document to get started</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{doc.name}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {doc.size} • {doc.uploadedAt.toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Document Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        {selectedReportType === "PSI Reports" && (
+                          <>
+                            <TableHead>Sentence Date</TableHead>
+                            <TableHead>Docket Number</TableHead>
+                          </>
+                        )}
+                        {selectedReportType === "Bail Reports" && (
+                          <>
+                            <TableHead>Hearing Date</TableHead>
+                            <TableHead>OTN</TableHead>
+                          </>
+                        )}
+                        {selectedReportType === "Social Summary Reports" && (
+                          <>
+                            <TableHead>Disposition Date</TableHead>
+                            <TableHead>Docket Number</TableHead>
+                          </>
+                        )}
+                        <TableHead>Uploaded By</TableHead>
+                        <TableHead>Upload Date</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {documents.map((doc) => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-blue-600" />
+                              {doc.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">{doc.description}</TableCell>
+                          {selectedReportType === "PSI Reports" && (
+                            <>
+                              <TableCell>
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Calendar className="w-3 h-3" />
+                                  {doc.sentenceDate}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{doc.docketNumber}</Badge>
+                              </TableCell>
+                            </>
+                          )}
+                          {selectedReportType === "Bail Reports" && (
+                            <>
+                              <TableCell>
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Calendar className="w-3 h-3" />
+                                  {doc.hearingDate}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{doc.otn}</Badge>
+                              </TableCell>
+                            </>
+                          )}
+                          {selectedReportType === "Social Summary Reports" && (
+                            <>
+                              <TableCell>
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Calendar className="w-3 h-3" />
+                                  {doc.dispositionDate}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{doc.docketNumber}</Badge>
+                              </TableCell>
+                            </>
+                          )}
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <User className="w-3 h-3" />
+                              {doc.uploadedBy}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {doc.uploadedAt.toLocaleDateString()} {doc.uploadedAt.toLocaleTimeString()}
+                          </TableCell>
+                          <TableCell className="text-sm">{doc.size}</TableCell>
+                          <TableCell>
+                            <Button variant="outline" size="sm">
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
