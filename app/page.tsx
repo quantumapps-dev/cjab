@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { FileText, Shield, Users, Database, Brain, Settings, Lock, FileCheck } from "lucide-react"
+import { FileText, Shield, Users, Database, Brain, Settings, Lock, FileCheck, FolderOpen } from "lucide-react"
 
 export default function Home() {
   return (
@@ -69,7 +69,7 @@ export default function Home() {
         {/* Report Types Section */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Supported Report Types</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white dark:from-blue-950 dark:to-gray-800">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
@@ -102,6 +102,18 @@ export default function Home() {
                 </div>
                 <CardDescription className="text-base">
                   Social Summary Reports with contextual background information
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-white dark:from-orange-950 dark:to-gray-800">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <FolderOpen className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                  <CardTitle className="text-xl">Custom Reports</CardTitle>
+                </div>
+                <CardDescription className="text-base">
+                  User-configurable report types with custom metadata fields
                 </CardDescription>
               </CardHeader>
             </Card>
