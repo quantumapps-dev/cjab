@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { UserPlus, Pencil, Trash2, Mail, Phone, Building2, Briefcase } from "lucide-react"
+import { UserPlus, Pencil, Trash2, Mail, Phone, Briefcase, Shield, User } from "lucide-react"
 import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -27,16 +29,19 @@ const userSchema = z.object({
   email: z.string().email("Invalid email address"),
   agencyName: z.string().min(1, "Agency name is required"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  status: z.enum(["active", "inactive"]),
 })
 
 type UserFormData = z.infer<typeof userSchema>
 
-interface User extends UserFormData {
+interface SystemUser extends UserFormData {
   id: string
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([
+  const [users, setUsers] = useState<SystemUser[]>([
     {
       id: "1",
       firstName: "John",
@@ -45,6 +50,9 @@ export default function UsersPage() {
       email: "john.doe@county.gov",
       agencyName: "County District Attorney's Office",
       phoneNumber: "(555) 123-4567",
+      username: "jdoe",
+      password: "********",
+      status: "active",
     },
     {
       id: "2",
@@ -54,18 +62,26 @@ export default function UsersPage() {
       email: "jane.smith@county.gov",
       agencyName: "County Probation Department",
       phoneNumber: "(555) 987-6543",
+      username: "jsmith",
+      password: "********",
+      status: "active",
     },
   ])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
+    defaultValues: {
+      status: "active",
+    },
   })
 
   const onSubmit = (data: UserFormData) => {
@@ -73,7 +89,7 @@ export default function UsersPage() {
       setUsers(users.map((user) => (user.id === editingUser.id ? { ...data, id: user.id } : user)))
       toast.success("User updated successfully")
     } else {
-      const newUser: User = {
+      const newUser: SystemUser = {
         ...data,
         id: Date.now().toString(),
       }
@@ -83,7 +99,7 @@ export default function UsersPage() {
     handleCloseDialog()
   }
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: SystemUser) => {
     setEditingUser(user)
     reset(user)
     setIsDialogOpen(true)
@@ -104,6 +120,9 @@ export default function UsersPage() {
       email: "",
       agencyName: "",
       phoneNumber: "",
+      username: "",
+      password: "",
+      status: "active",
     })
   }
 
@@ -116,6 +135,9 @@ export default function UsersPage() {
       email: "",
       agencyName: "",
       phoneNumber: "",
+      username: "",
+      password: "",
+      status: "active",
     })
     setIsDialogOpen(true)
   }
@@ -125,7 +147,9 @@ export default function UsersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Manage system users and their contact information</p>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Manage system users and their authentication credentials
+          </p>
         </div>
 
         <Card>
@@ -145,17 +169,18 @@ export default function UsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Username</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Agency</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         No users found. Add your first user to get started.
                       </TableCell>
                     </TableRow>
@@ -164,6 +189,12 @@ export default function UsersPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           {user.firstName} {user.lastName}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            {user.username}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -179,15 +210,21 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            {user.agencyName}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-gray-400" />
                             {user.phoneNumber}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={user.status === "active" ? "default" : "secondary"}
+                            className={
+                              user.status === "active"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                            }
+                          >
+                            {user.status === "active" ? "Active" : "Inactive"}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -219,13 +256,13 @@ export default function UsersPage() {
         </Card>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
               <DialogDescription>
                 {editingUser
-                  ? "Update the user's information below."
-                  : "Enter the user's information to add them to the system."}
+                  ? "Update the user's information and authentication credentials below."
+                  : "Enter the user's information and authentication credentials to add them to the system."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -262,9 +299,54 @@ export default function UsersPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber">Phone Number (for MFA)</Label>
                   <Input id="phoneNumber" {...register("phoneNumber")} placeholder="(555) 123-4567" />
                   {errors.phoneNumber && <p className="text-sm text-red-600">{errors.phoneNumber.message}</p>}
+                  <p className="text-xs text-gray-500">This number will be used for multi-factor authentication</p>
+                </div>
+
+                <div className="border-t pt-4 mt-2">
+                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Authentication Credentials
+                  </h3>
+
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input id="username" {...register("username")} placeholder="jdoe" />
+                      {errors.username && <p className="text-sm text-red-600">{errors.username.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        {...register("password")}
+                        placeholder="Enter secure password"
+                      />
+                      {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
+                      <p className="text-xs text-gray-500">Minimum 8 characters required</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Account Status</Label>
+                      <Select
+                        value={watch("status")}
+                        onValueChange={(value) => setValue("status", value as "active" | "inactive")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.status && <p className="text-sm text-red-600">{errors.status.message}</p>}
+                    </div>
+                  </div>
                 </div>
               </div>
               <DialogFooter>
