@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,7 +29,7 @@ interface User {
 
 interface AccessPermission {
   userId: string
-  reportType: "psi" | "bail" | "social" | "users" | "county-config"
+  reportType: string
   bailCourtId?: string
   canView: boolean
   canCreate: boolean
@@ -41,6 +41,19 @@ interface MagisterialCourt {
   id: string
   name: string
   districtNumber: string
+}
+
+interface DocumentRepository {
+  id: string
+  name: string
+  code: string
+  metadataFields: Array<{
+    id: string
+    name: string
+    label: string
+    type: string
+    required: boolean
+  }>
 }
 
 export default function AccessControlPage() {
@@ -56,6 +69,15 @@ export default function AccessControlPage() {
     { id: "1", name: "Magisterial District Court 15-1-01", districtNumber: "15-1-01" },
     { id: "2", name: "Magisterial District Court 15-1-02", districtNumber: "15-1-02" },
   ])
+
+  const [repositories, setRepositories] = useState<DocumentRepository[]>([])
+
+  useEffect(() => {
+    const stored = localStorage.getItem("documentRepositories")
+    if (stored) {
+      setRepositories(JSON.parse(stored))
+    }
+  }, [])
 
   const [permissions, setPermissions] = useState<AccessPermission[]>([
     { userId: "1", reportType: "psi", canView: true, canCreate: false, canEdit: false, canDelete: false },
@@ -76,9 +98,7 @@ export default function AccessControlPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedReportType, setSelectedReportType] = useState<"psi" | "bail" | "social" | "users" | "county-config">(
-    "psi",
-  )
+  const [selectedReportType, setSelectedReportType] = useState<string>("users")
   const [selectedCourt, setSelectedCourt] = useState<string>("")
   const [permissionForm, setPermissionForm] = useState({
     canView: false,
@@ -150,7 +170,7 @@ export default function AccessControlPage() {
 
   const resetForm = () => {
     setSelectedUser(null)
-    setSelectedReportType("psi")
+    setSelectedReportType("users")
     setSelectedCourt("")
     setPermissionForm({
       canView: false,
@@ -160,11 +180,7 @@ export default function AccessControlPage() {
     })
   }
 
-  const openEditDialog = (
-    user: User,
-    reportType: "psi" | "bail" | "social" | "users" | "county-config",
-    courtId?: string,
-  ) => {
+  const openEditDialog = (user: User, reportType: string, courtId?: string) => {
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
@@ -180,6 +196,10 @@ export default function AccessControlPage() {
     }
 
     setIsDialogOpen(true)
+  }
+
+  const getRepositoryByCode = (code: string) => {
+    return repositories.find((r) => r.code === code)
   }
 
   return (
@@ -249,19 +269,16 @@ export default function AccessControlPage() {
 
                 <div className="space-y-2">
                   <Label>Module / Report Type</Label>
-                  <Select
-                    value={selectedReportType}
-                    onValueChange={(value: "psi" | "bail" | "social" | "users" | "county-config") =>
-                      setSelectedReportType(value)
-                    }
-                  >
+                  <Select value={selectedReportType} onValueChange={(value: string) => setSelectedReportType(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="psi">PSI Reports</SelectItem>
-                      <SelectItem value="bail">Bail Reports</SelectItem>
-                      <SelectItem value="social">Social Summary Reports</SelectItem>
+                      {repositories.map((repo) => (
+                        <SelectItem key={repo.id} value={repo.code}>
+                          {repo.name}
+                        </SelectItem>
+                      ))}
                       <SelectItem value="users">User Management</SelectItem>
                       <SelectItem value="county-config">County Configuration</SelectItem>
                     </SelectContent>
@@ -305,7 +322,9 @@ export default function AccessControlPage() {
                           ? "View - Can view user list"
                           : selectedReportType === "county-config"
                             ? "View - Can view county configuration settings"
-                            : "View - Can view and read documents"}
+                            : getRepositoryByCode(selectedReportType)?.name
+                              ? `View - Can view ${getRepositoryByCode(selectedReportType)?.name} documents`
+                              : "View - Can view and read documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -324,7 +343,9 @@ export default function AccessControlPage() {
                           ? "Create - Can add new users"
                           : selectedReportType === "county-config"
                             ? "Create - Can add new county configuration settings"
-                            : "Create - Can upload new documents"}
+                            : getRepositoryByCode(selectedReportType)?.name
+                              ? `Create - Can upload new ${getRepositoryByCode(selectedReportType)?.name} documents`
+                              : "Create - Can upload new documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -343,7 +364,9 @@ export default function AccessControlPage() {
                           ? "Edit - Can modify user details"
                           : selectedReportType === "county-config"
                             ? "Edit - Can modify county configuration settings"
-                            : "Edit - Can modify existing documents"}
+                            : getRepositoryByCode(selectedReportType)?.name
+                              ? `Edit - Can modify existing ${getRepositoryByCode(selectedReportType)?.name} documents`
+                              : "Edit - Can modify existing documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -362,7 +385,9 @@ export default function AccessControlPage() {
                           ? "Delete - Can remove users"
                           : selectedReportType === "county-config"
                             ? "Delete - Can remove county configuration settings"
-                            : "Delete - Can remove documents"}
+                            : getRepositoryByCode(selectedReportType)?.name
+                              ? `Delete - Can remove ${getRepositoryByCode(selectedReportType)?.name} documents`
+                              : "Delete - Can remove documents"}
                       </label>
                     </div>
                   </div>
@@ -406,182 +431,139 @@ export default function AccessControlPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="psi" className="w-full">
-                    <TabsList className="grid w-full grid-cols-5">
-                      <TabsTrigger value="psi">PSI Reports</TabsTrigger>
-                      <TabsTrigger value="bail">Bail Reports</TabsTrigger>
-                      <TabsTrigger value="social">Social Summary</TabsTrigger>
+                  <Tabs defaultValue={repositories.length > 0 ? repositories[0]?.code : "users"} className="w-full">
+                    <TabsList className={`grid w-full grid-cols-${repositories.length + 2}`}>
+                      {repositories.map((repo) => (
+                        <TabsTrigger key={repo.id} value={repo.code}>
+                          {repo.name}
+                        </TabsTrigger>
+                      ))}
                       <TabsTrigger value="users">User Mgmt</TabsTrigger>
                       <TabsTrigger value="county-config">County Config</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="psi" className="space-y-3">
-                      {(() => {
-                        const perm = getUserPermissions(user.id, "psi")
-                        return perm ? (
-                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <FolderLock className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-sm">PSI Reports Access</span>
+                    {repositories.map((repo) => (
+                      <TabsContent key={repo.id} value={repo.code} className="space-y-3">
+                        {repo.code === "bail" ? (
+                          // Special handling for Bail Reports with court folders
+                          <>
+                            {courts.map((court) => {
+                              const perm = getUserPermissions(user.id, repo.code, court.id)
+                              return (
+                                <div key={court.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <FolderLock className="w-4 h-4 text-blue-600" />
+                                      <div>
+                                        <span className="font-medium text-sm block">{court.name}</span>
+                                        <span className="text-xs text-gray-500">{court.districtNumber}</span>
+                                      </div>
+                                    </div>
+                                    {perm ? (
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => openEditDialog(user, repo.code, court.id)}
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleRemovePermission(user.id, repo.code, court.id)}
+                                          className="text-red-600 hover:text-red-700"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedUser(user)
+                                          setSelectedReportType(repo.code)
+                                          setSelectedCourt(court.id)
+                                          setIsDialogOpen(true)
+                                        }}
+                                      >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Grant
+                                      </Button>
+                                    )}
+                                  </div>
+                                  {perm && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {perm.canView && <Badge variant="secondary">View</Badge>}
+                                      {perm.canCreate && <Badge variant="secondary">Create</Badge>}
+                                      {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
+                                      {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                            {courts.length === 0 && (
+                              <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                <p className="text-sm">No magisterial district courts configured</p>
+                                <p className="text-xs mt-1">Add courts in County Configuration first</p>
                               </div>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "psi")}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemovePermission(user.id, "psi")}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {perm.canView && <Badge variant="secondary">View</Badge>}
-                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                            </div>
-                          </div>
+                            )}
+                          </>
                         ) : (
-                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                            <p className="text-sm mb-2">No access configured</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setSelectedReportType("psi")
-                                setIsDialogOpen(true)
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Grant Access
-                            </Button>
-                          </div>
-                        )
-                      })()}
-                    </TabsContent>
-
-                    <TabsContent value="bail" className="space-y-3">
-                      {courts.map((court) => {
-                        const perm = getUserPermissions(user.id, "bail", court.id)
-                        return (
-                          <div key={court.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <FolderLock className="w-4 h-4 text-blue-600" />
-                                <div>
-                                  <span className="font-medium text-sm block">{court.name}</span>
-                                  <span className="text-xs text-gray-500">{court.districtNumber}</span>
+                          // Standard repository without subfolders
+                          (() => {
+                            const perm = getUserPermissions(user.id, repo.code)
+                            return perm ? (
+                              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <FolderLock className="w-4 h-4 text-blue-600" />
+                                    <span className="font-medium text-sm">{repo.name} Access</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, repo.code)}>
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemovePermission(user.id, repo.code)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {perm.canView && <Badge variant="secondary">View</Badge>}
+                                  {perm.canCreate && <Badge variant="secondary">Create</Badge>}
+                                  {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
+                                  {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
                                 </div>
                               </div>
-                              {perm ? (
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEditDialog(user, "bail", court.id)}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemovePermission(user.id, "bail", court.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              ) : (
+                            ) : (
+                              <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                <p className="text-sm mb-2">No access configured</p>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
                                     setSelectedUser(user)
-                                    setSelectedReportType("bail")
-                                    setSelectedCourt(court.id)
+                                    setSelectedReportType(repo.code)
                                     setIsDialogOpen(true)
                                   }}
                                 >
                                   <Plus className="w-4 h-4 mr-2" />
-                                  Grant
-                                </Button>
-                              )}
-                            </div>
-                            {perm && (
-                              <div className="flex flex-wrap gap-2">
-                                {perm.canView && <Badge variant="secondary">View</Badge>}
-                                {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                                {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                                {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                      {courts.length === 0 && (
-                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                          <p className="text-sm">No magisterial district courts configured</p>
-                          <p className="text-xs mt-1">Add courts in County Configuration first</p>
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="social" className="space-y-3">
-                      {(() => {
-                        const perm = getUserPermissions(user.id, "social")
-                        return perm ? (
-                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <FolderLock className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-sm">Social Summary Reports Access</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "social")}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemovePermission(user.id, "social")}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
+                                  Grant Access
                                 </Button>
                               </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {perm.canView && <Badge variant="secondary">View</Badge>}
-                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                            <p className="text-sm mb-2">No access configured</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setSelectedReportType("social")
-                                setIsDialogOpen(true)
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Grant Access
-                            </Button>
-                          </div>
-                        )
-                      })()}
-                    </TabsContent>
+                            )
+                          })()
+                        )}
+                      </TabsContent>
+                    ))}
 
                     <TabsContent value="users" className="space-y-3">
                       {(() => {
@@ -705,7 +687,8 @@ export default function AccessControlPage() {
                   Configure precise permissions for each user across different report types and system modules. For Bail
                   Reports, you can grant access to specific Magisterial District Court folders. Control who can view,
                   create, edit, and delete users through the User Management module permissions. Additionally, manage
-                  access to County Configuration settings.
+                  access to County Configuration settings. New document repositories added in County Config will
+                  automatically appear here for permission assignment.
                 </p>
               </div>
             </div>
