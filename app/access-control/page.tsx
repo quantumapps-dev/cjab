@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Users, FolderLock, Search, Plus, X, Check } from "lucide-react"
+import { Shield, Users, FolderLock, Search, Plus, X, Check, Settings } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -29,7 +29,7 @@ interface User {
 
 interface AccessPermission {
   userId: string
-  reportType: "psi" | "bail" | "social" | "users"
+  reportType: "psi" | "bail" | "social" | "users" | "county-config"
   bailCourtId?: string
   canView: boolean
   canCreate: boolean
@@ -76,7 +76,9 @@ export default function AccessControlPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedReportType, setSelectedReportType] = useState<"psi" | "bail" | "social" | "users">("psi")
+  const [selectedReportType, setSelectedReportType] = useState<"psi" | "bail" | "social" | "users" | "county-config">(
+    "psi",
+  )
   const [selectedCourt, setSelectedCourt] = useState<string>("")
   const [permissionForm, setPermissionForm] = useState({
     canView: false,
@@ -158,7 +160,11 @@ export default function AccessControlPage() {
     })
   }
 
-  const openEditDialog = (user: User, reportType: "psi" | "bail" | "social" | "users", courtId?: string) => {
+  const openEditDialog = (
+    user: User,
+    reportType: "psi" | "bail" | "social" | "users" | "county-config",
+    courtId?: string,
+  ) => {
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
@@ -245,7 +251,9 @@ export default function AccessControlPage() {
                   <Label>Module / Report Type</Label>
                   <Select
                     value={selectedReportType}
-                    onValueChange={(value: "psi" | "bail" | "social" | "users") => setSelectedReportType(value)}
+                    onValueChange={(value: "psi" | "bail" | "social" | "users" | "county-config") =>
+                      setSelectedReportType(value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -255,6 +263,7 @@ export default function AccessControlPage() {
                       <SelectItem value="bail">Bail Reports</SelectItem>
                       <SelectItem value="social">Social Summary Reports</SelectItem>
                       <SelectItem value="users">User Management</SelectItem>
+                      <SelectItem value="county-config">County Configuration</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -294,7 +303,9 @@ export default function AccessControlPage() {
                       >
                         {selectedReportType === "users"
                           ? "View - Can view user list"
-                          : "View - Can view and read documents"}
+                          : selectedReportType === "county-config"
+                            ? "View - Can view county configuration settings"
+                            : "View - Can view and read documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -311,7 +322,9 @@ export default function AccessControlPage() {
                       >
                         {selectedReportType === "users"
                           ? "Create - Can add new users"
-                          : "Create - Can upload new documents"}
+                          : selectedReportType === "county-config"
+                            ? "Create - Can add new county configuration settings"
+                            : "Create - Can upload new documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -328,7 +341,9 @@ export default function AccessControlPage() {
                       >
                         {selectedReportType === "users"
                           ? "Edit - Can modify user details"
-                          : "Edit - Can modify existing documents"}
+                          : selectedReportType === "county-config"
+                            ? "Edit - Can modify county configuration settings"
+                            : "Edit - Can modify existing documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -343,7 +358,11 @@ export default function AccessControlPage() {
                         htmlFor="canDelete"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {selectedReportType === "users" ? "Delete - Can remove users" : "Delete - Can remove documents"}
+                        {selectedReportType === "users"
+                          ? "Delete - Can remove users"
+                          : selectedReportType === "county-config"
+                            ? "Delete - Can remove county configuration settings"
+                            : "Delete - Can remove documents"}
                       </label>
                     </div>
                   </div>
@@ -388,11 +407,12 @@ export default function AccessControlPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="psi" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-5">
                       <TabsTrigger value="psi">PSI Reports</TabsTrigger>
                       <TabsTrigger value="bail">Bail Reports</TabsTrigger>
                       <TabsTrigger value="social">Social Summary</TabsTrigger>
                       <TabsTrigger value="users">User Mgmt</TabsTrigger>
+                      <TabsTrigger value="county-config">County Config</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="psi" className="space-y-3">
@@ -613,6 +633,57 @@ export default function AccessControlPage() {
                         )
                       })()}
                     </TabsContent>
+
+                    <TabsContent value="county-config" className="space-y-3">
+                      {(() => {
+                        const perm = getUserPermissions(user.id, "county-config")
+                        return perm ? (
+                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Settings className="w-4 h-4 text-blue-600" />
+                                <span className="font-medium text-sm">County Configuration Access</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "county-config")}>
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemovePermission(user.id, "county-config")}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {perm.canView && <Badge variant="secondary">View</Badge>}
+                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
+                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
+                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <p className="text-sm mb-2">No access configured</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setSelectedReportType("county-config")
+                                setIsDialogOpen(true)
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Grant Access
+                            </Button>
+                          </div>
+                        )
+                      })()}
+                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
@@ -633,7 +704,8 @@ export default function AccessControlPage() {
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   Configure precise permissions for each user across different report types and system modules. For Bail
                   Reports, you can grant access to specific Magisterial District Court folders. Control who can view,
-                  create, edit, and delete users through the User Management module permissions.
+                  create, edit, and delete users through the User Management module permissions. Additionally, manage
+                  access to County Configuration settings.
                 </p>
               </div>
             </div>

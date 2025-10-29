@@ -15,22 +15,25 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const [canViewUsers, setCanViewUsers] = useState(true) // Default to true for demo
+  const [canViewCountyConfig, setCanViewCountyConfig] = useState(true) // Added state to track County Config view permission
 
   useEffect(() => {
     const checkPermissions = () => {
-      // In a real app, this would check the current logged-in user's permissions
-      // For demo purposes, we'll check if user ID "1" has view permission for users module
       const storedPermissions = localStorage.getItem("userPermissions")
       if (storedPermissions) {
         const permissions = JSON.parse(storedPermissions)
         const userPermission = permissions.find((p: any) => p.userId === "1" && p.reportType === "users")
         setCanViewUsers(userPermission?.canView || false)
+
+        const countyConfigPermission = permissions.find(
+          (p: any) => p.userId === "1" && p.reportType === "county-config",
+        )
+        setCanViewCountyConfig(countyConfigPermission?.canView || false) // Check County Config view permission
       }
     }
 
     checkPermissions()
 
-    // Listen for storage changes (when permissions are updated)
     window.addEventListener("storage", checkPermissions)
     return () => window.removeEventListener("storage", checkPermissions)
   }, [])
@@ -40,7 +43,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
     { href: "/documents", label: "Documents" },
     ...(canViewUsers ? [{ href: "/users", label: "Users" }] : []),
     { href: "/access-control", label: "Access Control" },
-    { href: "/county-config", label: "County Config" },
+    ...(canViewCountyConfig ? [{ href: "/county-config", label: "County Config" }] : []), // Conditionally include County Config link based on permissions
   ]
 
   return (
