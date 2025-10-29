@@ -5,6 +5,7 @@ import { useTheme } from "next-themes"
 import { Moon, Sun, Shield } from "lucide-react"
 import { Button } from "./ui/button"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 interface HeaderProps {
   rightLogos?: string[]
@@ -13,10 +14,30 @@ interface HeaderProps {
 export default function Header({ rightLogos = [] }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
+  const [canViewUsers, setCanViewUsers] = useState(true) // Default to true for demo
+
+  useEffect(() => {
+    const checkPermissions = () => {
+      // In a real app, this would check the current logged-in user's permissions
+      // For demo purposes, we'll check if user ID "1" has view permission for users module
+      const storedPermissions = localStorage.getItem("userPermissions")
+      if (storedPermissions) {
+        const permissions = JSON.parse(storedPermissions)
+        const userPermission = permissions.find((p: any) => p.userId === "1" && p.reportType === "users")
+        setCanViewUsers(userPermission?.canView || false)
+      }
+    }
+
+    checkPermissions()
+
+    // Listen for storage changes (when permissions are updated)
+    window.addEventListener("storage", checkPermissions)
+    return () => window.removeEventListener("storage", checkPermissions)
+  }, [])
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/users", label: "Users" },
+    ...(canViewUsers ? [{ href: "/users", label: "Users" }] : []),
     { href: "/county-config", label: "County Config" },
     { href: "/access-control", label: "Access Control" },
     { href: "/documents", label: "Documents" },

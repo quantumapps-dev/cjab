@@ -29,7 +29,7 @@ interface User {
 
 interface AccessPermission {
   userId: string
-  reportType: "psi" | "bail" | "social"
+  reportType: "psi" | "bail" | "social" | "users"
   bailCourtId?: string
   canView: boolean
   canCreate: boolean
@@ -60,6 +60,7 @@ export default function AccessControlPage() {
   const [permissions, setPermissions] = useState<AccessPermission[]>([
     { userId: "1", reportType: "psi", canView: true, canCreate: false, canEdit: false, canDelete: false },
     { userId: "1", reportType: "social", canView: true, canCreate: false, canEdit: false, canDelete: false },
+    { userId: "1", reportType: "users", canView: true, canCreate: true, canEdit: true, canDelete: true },
     { userId: "2", reportType: "psi", canView: true, canCreate: true, canEdit: true, canDelete: false },
     {
       userId: "3",
@@ -75,7 +76,7 @@ export default function AccessControlPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedReportType, setSelectedReportType] = useState<"psi" | "bail" | "social">("psi")
+  const [selectedReportType, setSelectedReportType] = useState<"psi" | "bail" | "social" | "users">("psi")
   const [selectedCourt, setSelectedCourt] = useState<string>("")
   const [permissionForm, setPermissionForm] = useState({
     canView: false,
@@ -129,17 +130,19 @@ export default function AccessControlPage() {
       toast.success("Access permissions added successfully")
     }
 
+    localStorage.setItem("userPermissions", JSON.stringify(permissions))
+
     setIsDialogOpen(false)
     resetForm()
   }
 
   const handleRemovePermission = (userId: string, reportType: string, courtId?: string) => {
-    setPermissions(
-      permissions.filter(
-        (p) =>
-          !(p.userId === userId && p.reportType === reportType && (reportType !== "bail" || p.bailCourtId === courtId)),
-      ),
+    const updated = permissions.filter(
+      (p) =>
+        !(p.userId === userId && p.reportType === reportType && (reportType !== "bail" || p.bailCourtId === courtId)),
     )
+    setPermissions(updated)
+    localStorage.setItem("userPermissions", JSON.stringify(updated))
     toast.success("Access permission removed")
   }
 
@@ -155,7 +158,7 @@ export default function AccessControlPage() {
     })
   }
 
-  const openEditDialog = (user: User, reportType: "psi" | "bail" | "social", courtId?: string) => {
+  const openEditDialog = (user: User, reportType: "psi" | "bail" | "social" | "users", courtId?: string) => {
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
@@ -183,9 +186,7 @@ export default function AccessControlPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Access Control</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Manage user permissions for PSI, Bail, and Social Summary Reports
-              </p>
+              <p className="text-gray-600 dark:text-gray-400">Manage user permissions for reports and system modules</p>
             </div>
           </div>
         </div>
@@ -210,7 +211,7 @@ export default function AccessControlPage() {
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Configure Access Permission</DialogTitle>
-                <DialogDescription>Grant or modify user access to specific report types and folders</DialogDescription>
+                <DialogDescription>Grant or modify user access to specific report types and modules</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -241,10 +242,10 @@ export default function AccessControlPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Report Type</Label>
+                  <Label>Module / Report Type</Label>
                   <Select
                     value={selectedReportType}
-                    onValueChange={(value: "psi" | "bail" | "social") => setSelectedReportType(value)}
+                    onValueChange={(value: "psi" | "bail" | "social" | "users") => setSelectedReportType(value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -253,6 +254,7 @@ export default function AccessControlPage() {
                       <SelectItem value="psi">PSI Reports</SelectItem>
                       <SelectItem value="bail">Bail Reports</SelectItem>
                       <SelectItem value="social">Social Summary Reports</SelectItem>
+                      <SelectItem value="users">User Management</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -290,7 +292,9 @@ export default function AccessControlPage() {
                         htmlFor="canView"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        View - Can view and read documents
+                        {selectedReportType === "users"
+                          ? "View - Can view user list"
+                          : "View - Can view and read documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -305,7 +309,9 @@ export default function AccessControlPage() {
                         htmlFor="canCreate"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        Create - Can upload new documents
+                        {selectedReportType === "users"
+                          ? "Create - Can add new users"
+                          : "Create - Can upload new documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -320,7 +326,9 @@ export default function AccessControlPage() {
                         htmlFor="canEdit"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        Edit - Can modify existing documents
+                        {selectedReportType === "users"
+                          ? "Edit - Can modify user details"
+                          : "Edit - Can modify existing documents"}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -335,7 +343,7 @@ export default function AccessControlPage() {
                         htmlFor="canDelete"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        Delete - Can remove documents
+                        {selectedReportType === "users" ? "Delete - Can remove users" : "Delete - Can remove documents"}
                       </label>
                     </div>
                   </div>
@@ -380,10 +388,11 @@ export default function AccessControlPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="psi" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger value="psi">PSI Reports</TabsTrigger>
                       <TabsTrigger value="bail">Bail Reports</TabsTrigger>
                       <TabsTrigger value="social">Social Summary</TabsTrigger>
+                      <TabsTrigger value="users">User Mgmt</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="psi" className="space-y-3">
@@ -553,6 +562,57 @@ export default function AccessControlPage() {
                         )
                       })()}
                     </TabsContent>
+
+                    <TabsContent value="users" className="space-y-3">
+                      {(() => {
+                        const perm = getUserPermissions(user.id, "users")
+                        return perm ? (
+                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-blue-600" />
+                                <span className="font-medium text-sm">User Management Access</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "users")}>
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemovePermission(user.id, "users")}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {perm.canView && <Badge variant="secondary">View</Badge>}
+                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
+                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
+                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <p className="text-sm mb-2">No access configured</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setSelectedReportType("users")
+                                setIsDialogOpen(true)
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Grant Access
+                            </Button>
+                          </div>
+                        )
+                      })()}
+                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
@@ -571,9 +631,9 @@ export default function AccessControlPage() {
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Granular Access Control</h3>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Configure precise permissions for each user across different report types. For Bail Reports, you can
-                  grant access to specific Magisterial District Court folders, ensuring users only see documents
-                  relevant to their jurisdiction.
+                  Configure precise permissions for each user across different report types and system modules. For Bail
+                  Reports, you can grant access to specific Magisterial District Court folders. Control who can view,
+                  create, edit, and delete users through the User Management module permissions.
                 </p>
               </div>
             </div>
