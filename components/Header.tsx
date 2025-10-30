@@ -28,7 +28,7 @@ export default function Header({ rightLogos = [] }: HeaderProps) {
         const countyConfigPermission = permissions.find(
           (p: any) => p.userId === "1" && p.reportType === "county-config",
         )
-        setCanViewCountyConfig(countyConfigPermission?.canView || false)
+        setCanViewCountyConfig(countyConfigPermission?.canView !== false)
       }
     }
 
