@@ -387,7 +387,12 @@ export default function AccessControlPage() {
                     <Label>Module / Report Type</Label>
                     <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon(selectedReportType)}
+                            <span>{getModuleName(selectedReportType)}</span>
+                          </div>
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {repositories.map((repo) => (
@@ -418,7 +423,12 @@ export default function AccessControlPage() {
                     <Label>Module / Report Type</Label>
                     <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon(selectedReportType)}
+                            <span>{getModuleName(selectedReportType)}</span>
+                          </div>
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {repositories.map((repo) => (
