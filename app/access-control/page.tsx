@@ -432,14 +432,28 @@ export default function AccessControlPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue={repositories.length > 0 ? repositories[0]?.code : "users"} className="w-full">
-                    <TabsList className={`grid w-full grid-cols-${repositories.length + 2}`}>
+                    <TabsList className="inline-flex h-auto flex-wrap w-full justify-start gap-1 bg-transparent p-0">
                       {repositories.map((repo) => (
-                        <TabsTrigger key={repo.id} value={repo.code}>
+                        <TabsTrigger
+                          key={repo.id}
+                          value={repo.code}
+                          className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                        >
                           {repo.name}
                         </TabsTrigger>
                       ))}
-                      <TabsTrigger value="users">User Mgmt</TabsTrigger>
-                      <TabsTrigger value="county-config">County Config</TabsTrigger>
+                      <TabsTrigger
+                        value="users"
+                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                      >
+                        User Mgmt
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="county-config"
+                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                      >
+                        County Config
+                      </TabsTrigger>
                     </TabsList>
 
                     {repositories.map((repo) => (
