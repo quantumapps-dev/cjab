@@ -261,7 +261,9 @@ export default function AccessControlPage() {
         })
       }
 
-      setIsDialogOpen(true)
+      setTimeout(() => {
+        setIsDialogOpen(true)
+      }, 50)
     }, 10)
   }
 
@@ -382,79 +384,36 @@ export default function AccessControlPage() {
                   </Select>
                 </div>
 
-                {selectedUser ? (
-                  <div className="space-y-2">
-                    <Label>Module / Report Type</Label>
-                    <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
-                      <SelectTrigger>
-                        <SelectValue>
+                <div className="space-y-2">
+                  <Label>Module / Report Type</Label>
+                  <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a module or report type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {repositories.map((repo) => (
+                        <SelectItem key={repo.id} value={repo.code}>
                           <div className="flex items-center gap-2">
-                            {getModuleIcon(selectedReportType)}
-                            <span>{getModuleName(selectedReportType)}</span>
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {repositories.map((repo) => (
-                          <SelectItem key={repo.id} value={repo.code}>
-                            <div className="flex items-center gap-2">
-                              {getModuleIcon(repo.code)}
-                              <span>{repo.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="users">
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon("users")}
-                            <span>User Management</span>
+                            {getModuleIcon(repo.code)}
+                            <span>{repo.name}</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="county-config">
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon("county-config")}
-                            <span>County Configuration</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label>Module / Report Type</Label>
-                    <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
-                      <SelectTrigger>
-                        <SelectValue>
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon(selectedReportType)}
-                            <span>{getModuleName(selectedReportType)}</span>
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {repositories.map((repo) => (
-                          <SelectItem key={repo.id} value={repo.code}>
-                            <div className="flex items-center gap-2">
-                              {getModuleIcon(repo.code)}
-                              <span>{repo.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="users">
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon("users")}
-                            <span>User Management</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="county-config">
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon("county-config")}
-                            <span>County Configuration</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                      ))}
+                      <SelectItem value="users">
+                        <div className="flex items-center gap-2">
+                          {getModuleIcon("users")}
+                          <span>User Management</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="county-config">
+                        <div className="flex items-center gap-2">
+                          {getModuleIcon("county-config")}
+                          <span>County Configuration</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {selectedReportType === "bail" && (
                   <div className="space-y-2">
