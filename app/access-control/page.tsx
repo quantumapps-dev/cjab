@@ -130,7 +130,7 @@ export default function AccessControlPage() {
 
     const newPermission: AccessPermission = {
       userId: selectedUser.id,
-      reportType: selectedReportType,
+      reportType: selectedReportType, // This ensures each module has its own permission
       bailCourtId: selectedReportType === "bail" ? selectedCourt : undefined,
       ...permissionForm,
     }
@@ -142,17 +142,19 @@ export default function AccessControlPage() {
         (selectedReportType !== "bail" || p.bailCourtId === selectedCourt),
     )
 
+    let updatedPermissions: AccessPermission[]
+
     if (existingIndex >= 0) {
-      const updated = [...permissions]
-      updated[existingIndex] = newPermission
-      setPermissions(updated)
-      toast.success("Access permissions updated successfully")
+      updatedPermissions = [...permissions]
+      updatedPermissions[existingIndex] = newPermission
+      toast.success(`${getModuleName(selectedReportType)} permissions updated successfully`)
     } else {
-      setPermissions([...permissions, newPermission])
-      toast.success("Access permissions added successfully")
+      updatedPermissions = [...permissions, newPermission]
+      toast.success(`${getModuleName(selectedReportType)} permissions added successfully`)
     }
 
-    localStorage.setItem("userPermissions", JSON.stringify(permissions))
+    setPermissions(updatedPermissions)
+    localStorage.setItem("userPermissions", JSON.stringify(updatedPermissions))
 
     setIsDialogOpen(false)
     resetForm()
