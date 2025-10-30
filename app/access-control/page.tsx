@@ -76,6 +76,42 @@ export default function AccessControlPage() {
     const stored = localStorage.getItem("documentRepositories")
     if (stored) {
       setRepositories(JSON.parse(stored))
+    } else {
+      // Initialize with default repositories if none exist
+      const defaultRepos: DocumentRepository[] = [
+        {
+          id: "1",
+          name: "PSI Reports",
+          code: "psi",
+          metadataFields: [
+            { id: "1", name: "description", label: "Description", type: "textarea", required: true },
+            { id: "2", name: "sentenceDate", label: "Sentence Date", type: "date", required: true },
+            { id: "3", name: "docketNumber", label: "Docket Number", type: "text", required: true },
+          ],
+        },
+        {
+          id: "2",
+          name: "Bail Reports",
+          code: "bail",
+          metadataFields: [
+            { id: "1", name: "description", label: "Description", type: "textarea", required: true },
+            { id: "2", name: "hearingDate", label: "Hearing Date", type: "date", required: true },
+            { id: "3", name: "otn", label: "OTN (Offense Tracking Number)", type: "text", required: true },
+          ],
+        },
+        {
+          id: "3",
+          name: "Social Summary Reports",
+          code: "social",
+          metadataFields: [
+            { id: "1", name: "description", label: "Description", type: "textarea", required: true },
+            { id: "2", name: "dispositionDate", label: "Disposition Date", type: "date", required: true },
+            { id: "3", name: "docketNumber", label: "Docket Number", type: "text", required: true },
+          ],
+        },
+      ]
+      setRepositories(defaultRepos)
+      localStorage.setItem("documentRepositories", JSON.stringify(defaultRepos))
     }
   }, [])
 
@@ -230,12 +266,7 @@ export default function AccessControlPage() {
         canEdit: existing.canEdit,
         canDelete: existing.canDelete,
       })
-      console.log("[v0] Loaded existing permissions into form:", {
-        canView: existing.canView,
-        canCreate: existing.canCreate,
-        canEdit: existing.canEdit,
-        canDelete: existing.canDelete,
-      })
+      console.log("[v0] Loaded existing permissions into form")
     } else {
       setPermissionForm({
         canView: false,
@@ -246,7 +277,9 @@ export default function AccessControlPage() {
       console.log("[v0] No existing permission - form reset to all false")
     }
 
-    setIsDialogOpen(true)
+    setTimeout(() => {
+      setIsDialogOpen(true)
+    }, 0)
   }
 
   const getRepositoryByCode = (code: string) => {
