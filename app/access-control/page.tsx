@@ -388,29 +388,25 @@ export default function AccessControlPage() {
                   <Label>Module / Report Type</Label>
                   <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a module or report type" />
+                      <SelectValue>
+                        {selectedReportType ? (
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon(selectedReportType)}
+                            <span>{getModuleName(selectedReportType)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Select a module or report type</span>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {repositories.map((repo) => (
                         <SelectItem key={repo.id} value={repo.code}>
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon(repo.code)}
-                            <span>{repo.name}</span>
-                          </div>
+                          {repo.name}
                         </SelectItem>
                       ))}
-                      <SelectItem value="users">
-                        <div className="flex items-center gap-2">
-                          {getModuleIcon("users")}
-                          <span>User Management</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="county-config">
-                        <div className="flex items-center gap-2">
-                          {getModuleIcon("county-config")}
-                          <span>County Configuration</span>
-                        </div>
-                      </SelectItem>
+                      <SelectItem value="users">User Management</SelectItem>
+                      <SelectItem value="county-config">County Configuration</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
