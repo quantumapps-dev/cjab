@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Users, FolderLock, Search, Plus, X, Check, Settings } from "lucide-react"
+import { Shield, Users, FolderLock, Search, Plus, X, Check, Settings, FileText } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -16,9 +16,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface User {
   id: string
@@ -107,8 +107,6 @@ export default function AccessControlPage() {
     canDelete: false,
   })
 
-  const [activeUserTabs, setActiveUserTabs] = useState<Record<string, string>>({})
-
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,6 +193,13 @@ export default function AccessControlPage() {
         canEdit: existing.canEdit,
         canDelete: existing.canDelete,
       })
+    } else {
+      setPermissionForm({
+        canView: false,
+        canCreate: false,
+        canEdit: false,
+        canDelete: false,
+      })
     }
 
     setIsDialogOpen(true)
@@ -204,19 +209,25 @@ export default function AccessControlPage() {
     return repositories.find((r) => r.code === code)
   }
 
-  const getActiveTab = (userId: string) => {
-    if (activeUserTabs[userId]) {
-      return activeUserTabs[userId]
-    }
-    return repositories.length > 0 ? repositories[0]?.code : "users"
+  const getModuleIcon = (moduleType: string) => {
+    if (moduleType === "users") return <Users className="w-4 h-4" />
+    if (moduleType === "county-config") return <Settings className="w-4 h-4" />
+    if (moduleType === "bail") return <FolderLock className="w-4 h-4" />
+    return <FileText className="w-4 h-4" />
   }
 
-  const setActiveTab = (userId: string, tabValue: string) => {
-    setActiveUserTabs((prev) => ({
-      ...prev,
-      [userId]: tabValue,
-    }))
+  const getModuleName = (moduleType: string) => {
+    if (moduleType === "users") return "User Management"
+    if (moduleType === "county-config") return "County Configuration"
+    const repo = getRepositoryByCode(moduleType)
+    return repo ? repo.name : moduleType
   }
+
+  const allModules = [
+    ...repositories.map((r) => ({ type: r.code, name: r.name, isRepository: true })),
+    { type: "users", name: "User Management", isRepository: false },
+    { type: "county-config", name: "County Configuration", isRepository: false },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -334,13 +345,7 @@ export default function AccessControlPage() {
                         htmlFor="canView"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {selectedReportType === "users"
-                          ? "View - Can view user list"
-                          : selectedReportType === "county-config"
-                            ? "View - Can view county configuration settings"
-                            : getRepositoryByCode(selectedReportType)?.name
-                              ? `View - Can view ${getRepositoryByCode(selectedReportType)?.name} documents`
-                              : "View - Can view and read documents"}
+                        View - Can view and read
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -355,13 +360,7 @@ export default function AccessControlPage() {
                         htmlFor="canCreate"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {selectedReportType === "users"
-                          ? "Create - Can add new users"
-                          : selectedReportType === "county-config"
-                            ? "Create - Can add new county configuration settings"
-                            : getRepositoryByCode(selectedReportType)?.name
-                              ? `Create - Can upload new ${getRepositoryByCode(selectedReportType)?.name} documents`
-                              : "Create - Can upload new documents"}
+                        Create - Can add new items
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -376,13 +375,7 @@ export default function AccessControlPage() {
                         htmlFor="canEdit"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {selectedReportType === "users"
-                          ? "Edit - Can modify user details"
-                          : selectedReportType === "county-config"
-                            ? "Edit - Can modify county configuration settings"
-                            : getRepositoryByCode(selectedReportType)?.name
-                              ? `Edit - Can modify existing ${getRepositoryByCode(selectedReportType)?.name} documents`
-                              : "Edit - Can modify existing documents"}
+                        Edit - Can modify existing items
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -397,13 +390,7 @@ export default function AccessControlPage() {
                         htmlFor="canDelete"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {selectedReportType === "users"
-                          ? "Delete - Can remove users"
-                          : selectedReportType === "county-config"
-                            ? "Delete - Can remove county configuration settings"
-                            : getRepositoryByCode(selectedReportType)?.name
-                              ? `Delete - Can remove ${getRepositoryByCode(selectedReportType)?.name} documents`
-                              : "Delete - Can remove documents"}
+                        Delete - Can remove items
                       </label>
                     </div>
                   </div>
@@ -447,260 +434,126 @@ export default function AccessControlPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Tabs
-                    value={getActiveTab(user.id)}
-                    onValueChange={(value) => setActiveTab(user.id, value)}
-                    className="w-full"
-                  >
-                    <TabsList className="inline-flex h-auto flex-wrap w-full justify-start gap-1 bg-transparent p-0">
-                      {repositories.map((repo) => (
-                        <TabsTrigger
-                          key={repo.id}
-                          value={repo.code}
-                          className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                        >
-                          {repo.name}
-                        </TabsTrigger>
-                      ))}
-                      <TabsTrigger
-                        value="users"
-                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                      >
-                        User Mgmt
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="county-config"
-                        className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                      >
-                        County Config
-                      </TabsTrigger>
-                    </TabsList>
-
-                    {repositories.map((repo) => (
-                      <TabsContent key={repo.id} value={repo.code} className="space-y-3">
-                        {repo.code === "bail" ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[250px]">Module / Repository</TableHead>
+                          <TableHead className="text-center">View</TableHead>
+                          <TableHead className="text-center">Create</TableHead>
+                          <TableHead className="text-center">Edit</TableHead>
+                          <TableHead className="text-center">Delete</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allModules.map((module) => {
                           // Special handling for Bail Reports with court folders
-                          <>
-                            {courts.map((court) => {
-                              const perm = getUserPermissions(user.id, repo.code, court.id)
+                          if (module.type === "bail") {
+                            return courts.map((court) => {
+                              const perm = getUserPermissions(user.id, module.type, court.id)
                               return (
-                                <div key={court.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                                  <div className="flex items-center justify-between mb-3">
+                                <TableRow key={`${module.type}-${court.id}`}>
+                                  <TableCell>
                                     <div className="flex items-center gap-2">
-                                      <FolderLock className="w-4 h-4 text-blue-600" />
+                                      {getModuleIcon(module.type)}
                                       <div>
-                                        <span className="font-medium text-sm block">{court.name}</span>
-                                        <span className="text-xs text-gray-500">{court.districtNumber}</span>
+                                        <div className="font-medium text-sm">{module.name}</div>
+                                        <div className="text-xs text-gray-500">{court.name}</div>
                                       </div>
                                     </div>
-                                    {perm ? (
-                                      <div className="flex gap-2">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => openEditDialog(user, repo.code, court.id)}
-                                        >
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleRemovePermission(user.id, repo.code, court.id)}
-                                          className="text-red-600 hover:text-red-700"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </Button>
-                                      </div>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {perm?.canView ? (
+                                      <Check className="w-4 h-4 text-green-600 mx-auto" />
                                     ) : (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedUser(user)
-                                          setSelectedReportType(repo.code)
-                                          setSelectedCourt(court.id)
-                                          setIsDialogOpen(true)
-                                        }}
-                                      >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Grant
-                                      </Button>
+                                      <X className="w-4 h-4 text-gray-300 mx-auto" />
                                     )}
-                                  </div>
-                                  {perm && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {perm.canView && <Badge variant="secondary">View</Badge>}
-                                      {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                                      {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                                      {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                            {courts.length === 0 && (
-                              <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                                <p className="text-sm">No magisterial district courts configured</p>
-                                <p className="text-xs mt-1">Add courts in County Configuration first</p>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          // Standard repository without subfolders
-                          (() => {
-                            const perm = getUserPermissions(user.id, repo.code)
-                            return perm ? (
-                              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <FolderLock className="w-4 h-4 text-blue-600" />
-                                    <span className="font-medium text-sm">{repo.name} Access</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, repo.code)}>
-                                      Edit
-                                    </Button>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {perm?.canCreate ? (
+                                      <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                    ) : (
+                                      <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {perm?.canEdit ? (
+                                      <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                    ) : (
+                                      <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {perm?.canDelete ? (
+                                      <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                    ) : (
+                                      <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right">
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => handleRemovePermission(user.id, repo.code)}
-                                      className="text-red-600 hover:text-red-700"
+                                      onClick={() => openEditDialog(user, module.type, court.id)}
                                     >
-                                      <X className="w-4 h-4" />
+                                      {perm ? "Edit" : "Grant"}
                                     </Button>
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {perm.canView && <Badge variant="secondary">View</Badge>}
-                                  {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                                  {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                                  {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                                <p className="text-sm mb-2">No access configured</p>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedUser(user)
-                                    setSelectedReportType(repo.code)
-                                    setIsDialogOpen(true)
-                                  }}
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Grant Access
-                                </Button>
-                              </div>
-                            )
-                          })()
-                        )}
-                      </TabsContent>
-                    ))}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            })
+                          }
 
-                    <TabsContent value="users" className="space-y-3">
-                      {(() => {
-                        const perm = getUserPermissions(user.id, "users")
-                        return perm ? (
-                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-sm">User Management Access</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "users")}>
-                                  Edit
+                          // Standard modules without subfolders
+                          const perm = getUserPermissions(user.id, module.type)
+                          return (
+                            <TableRow key={module.type}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {getModuleIcon(module.type)}
+                                  <span className="font-medium text-sm">{module.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {perm?.canView ? (
+                                  <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                ) : (
+                                  <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {perm?.canCreate ? (
+                                  <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                ) : (
+                                  <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {perm?.canEdit ? (
+                                  <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                ) : (
+                                  <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {perm?.canDelete ? (
+                                  <Check className="w-4 h-4 text-green-600 mx-auto" />
+                                ) : (
+                                  <X className="w-4 h-4 text-gray-300 mx-auto" />
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, module.type)}>
+                                  {perm ? "Edit" : "Grant"}
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemovePermission(user.id, "users")}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {perm.canView && <Badge variant="secondary">View</Badge>}
-                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                            <p className="text-sm mb-2">No access configured</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setSelectedReportType("users")
-                                setIsDialogOpen(true)
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Grant Access
-                            </Button>
-                          </div>
-                        )
-                      })()}
-                    </TabsContent>
-
-                    <TabsContent value="county-config" className="space-y-3">
-                      {(() => {
-                        const perm = getUserPermissions(user.id, "county-config")
-                        return perm ? (
-                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <Settings className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-sm">County Configuration Access</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, "county-config")}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemovePermission(user.id, "county-config")}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {perm.canView && <Badge variant="secondary">View</Badge>}
-                              {perm.canCreate && <Badge variant="secondary">Create</Badge>}
-                              {perm.canEdit && <Badge variant="secondary">Edit</Badge>}
-                              {perm.canDelete && <Badge variant="secondary">Delete</Badge>}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                            <p className="text-sm mb-2">No access configured</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setSelectedReportType("county-config")
-                                setIsDialogOpen(true)
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Grant Access
-                            </Button>
-                          </div>
-                        )
-                      })()}
-                    </TabsContent>
-                  </Tabs>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )
@@ -718,11 +571,10 @@ export default function AccessControlPage() {
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Granular Access Control</h3>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Configure precise permissions for each user across different report types and system modules. For Bail
-                  Reports, you can grant access to specific Magisterial District Court folders. Control who can view,
-                  create, edit, and delete users through the User Management module permissions. Additionally, manage
-                  access to County Configuration settings. New document repositories added in County Config will
-                  automatically appear here for permission assignment.
+                  Configure precise permissions for each user across all document repositories and system modules. Each
+                  module can have independent CRUD permissions (View, Create, Edit, Delete). For Bail Reports, you can
+                  grant access to specific Magisterial District Court folders. New document repositories added in County
+                  Config will automatically appear in this table for permission assignment.
                 </p>
               </div>
             </div>
