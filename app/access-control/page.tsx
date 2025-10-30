@@ -236,29 +236,33 @@ export default function AccessControlPage() {
   }
 
   const openEditDialog = (user: User, reportType: string, courtId?: string) => {
-    const existing = getUserPermissions(user.id, reportType, courtId)
+    setIsDialogOpen(false)
 
-    setSelectedUser(user)
-    setSelectedReportType(reportType)
-    setSelectedCourt(courtId || "")
+    setTimeout(() => {
+      const existing = getUserPermissions(user.id, reportType, courtId)
 
-    if (existing) {
-      setPermissionForm({
-        canView: existing.canView,
-        canCreate: existing.canCreate,
-        canEdit: existing.canEdit,
-        canDelete: existing.canDelete,
-      })
-    } else {
-      setPermissionForm({
-        canView: false,
-        canCreate: false,
-        canEdit: false,
-        canDelete: false,
-      })
-    }
+      setSelectedUser(user)
+      setSelectedReportType(reportType)
+      setSelectedCourt(courtId || "")
 
-    setIsDialogOpen(true)
+      if (existing) {
+        setPermissionForm({
+          canView: existing.canView,
+          canCreate: existing.canCreate,
+          canEdit: existing.canEdit,
+          canDelete: existing.canDelete,
+        })
+      } else {
+        setPermissionForm({
+          canView: false,
+          canCreate: false,
+          canEdit: false,
+          canDelete: false,
+        })
+      }
+
+      setIsDialogOpen(true)
+    }, 10)
   }
 
   const getRepositoryByCode = (code: string) => {
@@ -317,7 +321,10 @@ export default function AccessControlPage() {
                 Add Permission
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent
+              key={`${selectedReportType}-${selectedCourt}-${selectedUser?.id}`}
+              className="sm:max-w-[550px]"
+            >
               <DialogHeader>
                 <DialogTitle>Configure Access Permission</DialogTitle>
                 <DialogDescription>Grant or modify user access to specific report types and modules</DialogDescription>
