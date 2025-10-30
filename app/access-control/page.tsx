@@ -123,10 +123,6 @@ export default function AccessControlPage() {
   const handleAddPermission = () => {
     if (!selectedUser) return
 
-    console.log("[v0] Saving permission for reportType:", selectedReportType)
-    console.log("[v0] Selected user:", selectedUser.name)
-    console.log("[v0] Permission form:", permissionForm)
-
     if (selectedReportType === "bail" && !selectedCourt) {
       toast.error("Please select a magisterial district court for Bail Reports")
       return
@@ -142,8 +138,6 @@ export default function AccessControlPage() {
       canDelete: permissionForm.canDelete,
     }
 
-    console.log("[v0] New permission object:", newPermission)
-
     const existingIndex = permissions.findIndex(
       (p) =>
         p.userId === selectedUser.id &&
@@ -151,22 +145,16 @@ export default function AccessControlPage() {
         (selectedReportType !== "bail" || p.bailCourtId === selectedCourt),
     )
 
-    console.log("[v0] Existing permission index:", existingIndex)
-
     let updatedPermissions: AccessPermission[]
 
     if (existingIndex >= 0) {
       updatedPermissions = [...permissions]
       updatedPermissions[existingIndex] = newPermission
-      console.log("[v0] Updated existing permission at index:", existingIndex)
       toast.success(`${getModuleName(selectedReportType)} permissions updated successfully`)
     } else {
       updatedPermissions = [...permissions, newPermission]
-      console.log("[v0] Added new permission, total count:", updatedPermissions.length)
       toast.success(`${getModuleName(selectedReportType)} permissions added successfully`)
     }
-
-    console.log("[v0] All permissions after update:", updatedPermissions)
 
     setPermissions(updatedPermissions)
     localStorage.setItem("userPermissions", JSON.stringify(updatedPermissions))
@@ -198,14 +186,11 @@ export default function AccessControlPage() {
   }
 
   const openEditDialog = (user: User, reportType: string, courtId?: string) => {
-    console.log("[v0] Opening dialog for user:", user.name, "reportType:", reportType, "courtId:", courtId)
-
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
 
     const existing = getUserPermissions(user.id, reportType, courtId)
-    console.log("[v0] Existing permission found:", existing)
 
     if (existing) {
       setPermissionForm({
@@ -315,25 +300,49 @@ export default function AccessControlPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Module / Report Type</Label>
-                  <Select value={selectedReportType} onValueChange={(value: string) => setSelectedReportType(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {repositories.map((repo) => (
-                        <SelectItem key={repo.id} value={repo.code}>
-                          {repo.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="users">User Management</SelectItem>
-                      <SelectItem value="county-config">County Configuration</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {selectedUser ? (
+                  <div className="space-y-2">
+                    <Label>Module / Report Type</Label>
+                    <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50 dark:bg-gray-900">
+                      {getModuleIcon(selectedReportType)}
+                      <span className="font-medium">{getModuleName(selectedReportType)}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Click "Grant" or "Edit" on a specific module row to configure its permissions
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Module / Report Type</Label>
+                    <Select value={selectedReportType} onValueChange={(value: string) => setSelectedReportType(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {repositories.map((repo) => (
+                          <SelectItem key={repo.id} value={repo.code}>
+                            {repo.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="users">User Management</SelectItem>
+                        <SelectItem value="county-config">County Configuration</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                {selectedReportType === "bail" && (
+                {selectedReportType === "bail" && selectedCourt && (
+                  <div className="space-y-2">
+                    <Label>Magisterial District Court</Label>
+                    <div className="p-3 border rounded-md bg-gray-50 dark:bg-gray-900">
+                      <span className="font-medium">
+                        {courts.find((c) => c.id === selectedCourt)?.name || "Unknown Court"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedReportType === "bail" && !selectedCourt && (
                   <div className="space-y-2">
                     <Label>Magisterial District Court</Label>
                     <Select value={selectedCourt} onValueChange={setSelectedCourt}>
@@ -469,7 +478,6 @@ export default function AccessControlPage() {
                       </TableHeader>
                       <TableBody>
                         {allModules.map((module) => {
-                          // Special handling for Bail Reports with court folders
                           if (module.type === "bail") {
                             return courts.map((court) => {
                               const perm = getUserPermissions(user.id, module.type, court.id)
@@ -526,7 +534,6 @@ export default function AccessControlPage() {
                             })
                           }
 
-                          // Standard modules without subfolders
                           const perm = getUserPermissions(user.id, module.type)
                           return (
                             <TableRow key={module.type}>
