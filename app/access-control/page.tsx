@@ -388,16 +388,7 @@ export default function AccessControlPage() {
                   <Label>Module / Report Type</Label>
                   <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
                     <SelectTrigger>
-                      <SelectValue>
-                        {selectedReportType ? (
-                          <div className="flex items-center gap-2">
-                            {getModuleIcon(selectedReportType)}
-                            <span>{getModuleName(selectedReportType)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500">Select a module or report type</span>
-                        )}
-                      </SelectValue>
+                      <SelectValue placeholder="Select a module or report type" />
                     </SelectTrigger>
                     <SelectContent>
                       {repositories.map((repo) => (
