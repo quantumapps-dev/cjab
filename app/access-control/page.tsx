@@ -265,6 +265,31 @@ export default function AccessControlPage() {
     }, 10)
   }
 
+  const handleModuleTypeChange = (newReportType: string) => {
+    setSelectedReportType(newReportType)
+    setSelectedCourt("")
+
+    // Load existing permissions for the new module type if they exist
+    if (selectedUser) {
+      const existing = getUserPermissions(selectedUser.id, newReportType)
+      if (existing) {
+        setPermissionForm({
+          canView: existing.canView,
+          canCreate: existing.canCreate,
+          canEdit: existing.canEdit,
+          canDelete: existing.canDelete,
+        })
+      } else {
+        setPermissionForm({
+          canView: false,
+          canCreate: false,
+          canEdit: false,
+          canDelete: false,
+        })
+      }
+    }
+  }
+
   const getRepositoryByCode = (code: string) => {
     return repositories.find((r) => r.code === code)
   }
@@ -360,46 +385,68 @@ export default function AccessControlPage() {
                 {selectedUser ? (
                   <div className="space-y-2">
                     <Label>Module / Report Type</Label>
-                    <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50 dark:bg-gray-900">
-                      {getModuleIcon(selectedReportType)}
-                      <span className="font-medium">{getModuleName(selectedReportType)}</span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Click "Grant" or "Edit" on a specific module row to configure its permissions
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label>Module / Report Type</Label>
-                    <Select value={selectedReportType} onValueChange={(value: string) => setSelectedReportType(value)}>
+                    <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {repositories.map((repo) => (
                           <SelectItem key={repo.id} value={repo.code}>
-                            {repo.name}
+                            <div className="flex items-center gap-2">
+                              {getModuleIcon(repo.code)}
+                              <span>{repo.name}</span>
+                            </div>
                           </SelectItem>
                         ))}
-                        <SelectItem value="users">User Management</SelectItem>
-                        <SelectItem value="county-config">County Configuration</SelectItem>
+                        <SelectItem value="users">
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon("users")}
+                            <span>User Management</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="county-config">
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon("county-config")}
+                            <span>County Configuration</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Module / Report Type</Label>
+                    <Select value={selectedReportType} onValueChange={handleModuleTypeChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {repositories.map((repo) => (
+                          <SelectItem key={repo.id} value={repo.code}>
+                            <div className="flex items-center gap-2">
+                              {getModuleIcon(repo.code)}
+                              <span>{repo.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="users">
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon("users")}
+                            <span>User Management</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="county-config">
+                          <div className="flex items-center gap-2">
+                            {getModuleIcon("county-config")}
+                            <span>County Configuration</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 )}
 
-                {selectedReportType === "bail" && selectedCourt && (
-                  <div className="space-y-2">
-                    <Label>Magisterial District Court</Label>
-                    <div className="p-3 border rounded-md bg-gray-50 dark:bg-gray-900">
-                      <span className="font-medium">
-                        {courts.find((c) => c.id === selectedCourt)?.name || "Unknown Court"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {selectedReportType === "bail" && !selectedCourt && (
+                {selectedReportType === "bail" && (
                   <div className="space-y-2">
                     <Label>Magisterial District Court</Label>
                     <Select value={selectedCourt} onValueChange={setSelectedCourt}>
