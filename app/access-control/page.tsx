@@ -123,6 +123,15 @@ export default function AccessControlPage() {
   const handleAddPermission = () => {
     if (!selectedUser) return
 
+    console.log("[v0] Saving permission with:", {
+      userName: selectedUser.name,
+      userId: selectedUser.id,
+      reportType: selectedReportType,
+      moduleName: getModuleName(selectedReportType),
+      bailCourtId: selectedReportType === "bail" ? selectedCourt : undefined,
+      permissions: permissionForm,
+    })
+
     if (selectedReportType === "bail" && !selectedCourt) {
       toast.error("Please select a magisterial district court for Bail Reports")
       return
@@ -138,6 +147,8 @@ export default function AccessControlPage() {
       canDelete: permissionForm.canDelete,
     }
 
+    console.log("[v0] New permission object created:", newPermission)
+
     const existingIndex = permissions.findIndex(
       (p) =>
         p.userId === selectedUser.id &&
@@ -145,16 +156,26 @@ export default function AccessControlPage() {
         (selectedReportType !== "bail" || p.bailCourtId === selectedCourt),
     )
 
+    console.log("[v0] Existing permission index:", existingIndex)
+
     let updatedPermissions: AccessPermission[]
 
     if (existingIndex >= 0) {
       updatedPermissions = [...permissions]
       updatedPermissions[existingIndex] = newPermission
+      console.log("[v0] Updated existing permission at index", existingIndex)
       toast.success(`${getModuleName(selectedReportType)} permissions updated successfully`)
     } else {
       updatedPermissions = [...permissions, newPermission]
+      console.log("[v0] Added new permission to array")
       toast.success(`${getModuleName(selectedReportType)} permissions added successfully`)
     }
+
+    console.log("[v0] All permissions after update:", updatedPermissions)
+    console.log(
+      "[v0] Permissions for this user:",
+      updatedPermissions.filter((p) => p.userId === selectedUser.id),
+    )
 
     setPermissions(updatedPermissions)
     localStorage.setItem("userPermissions", JSON.stringify(updatedPermissions))
@@ -186,14 +207,30 @@ export default function AccessControlPage() {
   }
 
   const openEditDialog = (user: User, reportType: string, courtId?: string) => {
+    console.log("[v0] Opening dialog for:", {
+      userName: user.name,
+      userId: user.id,
+      reportType: reportType,
+      courtId: courtId,
+      moduleName: getModuleName(reportType),
+    })
+
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
 
     const existing = getUserPermissions(user.id, reportType, courtId)
 
+    console.log("[v0] Existing permission found:", existing)
+
     if (existing) {
       setPermissionForm({
+        canView: existing.canView,
+        canCreate: existing.canCreate,
+        canEdit: existing.canEdit,
+        canDelete: existing.canDelete,
+      })
+      console.log("[v0] Loaded existing permissions into form:", {
         canView: existing.canView,
         canCreate: existing.canCreate,
         canEdit: existing.canEdit,
@@ -206,6 +243,7 @@ export default function AccessControlPage() {
         canEdit: false,
         canDelete: false,
       })
+      console.log("[v0] No existing permission - form reset to all false")
     }
 
     setIsDialogOpen(true)
