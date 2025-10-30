@@ -157,13 +157,15 @@ export default function AccessControlPage() {
   }
 
   const handleAddPermission = () => {
-    if (!selectedUser) return
+    if (!selectedUser) {
+      toast.error("Please select a user")
+      return
+    }
 
-    console.log("[v0] ===== SAVING PERMISSION =====")
-    console.log("[v0] Current selectedReportType state:", selectedReportType)
-    console.log("[v0] Current selectedUser:", selectedUser.name, selectedUser.id)
-    console.log("[v0] Current selectedCourt:", selectedCourt)
-    console.log("[v0] Current permissionForm:", permissionForm)
+    if (!selectedReportType) {
+      toast.error("Please select a module/report type")
+      return
+    }
 
     if (selectedReportType === "bail" && !selectedCourt) {
       toast.error("Please select a magisterial district court for Bail Reports")
@@ -180,48 +182,32 @@ export default function AccessControlPage() {
       canDelete: permissionForm.canDelete,
     }
 
-    console.log("[v0] Created new permission object:", JSON.stringify(newPermission, null, 2))
-
     const existingIndex = permissions.findIndex(
       (p) =>
-        p.userId === selectedUser.id &&
-        p.reportType === selectedReportType &&
-        (selectedReportType !== "bail" || p.bailCourtId === selectedCourt),
+        p.userId === newPermission.userId &&
+        p.reportType === newPermission.reportType &&
+        (newPermission.reportType !== "bail" || p.bailCourtId === newPermission.bailCourtId),
     )
-
-    console.log("[v0] Searching for existing permission with criteria:", {
-      userId: selectedUser.id,
-      reportType: selectedReportType,
-      bailCourtId: selectedReportType === "bail" ? selectedCourt : undefined,
-    })
-    console.log("[v0] Found at index:", existingIndex)
 
     let updatedPermissions: AccessPermission[]
 
     if (existingIndex >= 0) {
       updatedPermissions = [...permissions]
-      console.log("[v0] BEFORE update - permission at index", existingIndex, ":", updatedPermissions[existingIndex])
       updatedPermissions[existingIndex] = newPermission
-      console.log("[v0] AFTER update - permission at index", existingIndex, ":", updatedPermissions[existingIndex])
-      toast.success(`${getModuleName(selectedReportType)} permissions updated successfully`)
     } else {
       updatedPermissions = [...permissions, newPermission]
-      console.log("[v0] Added NEW permission to array")
-      toast.success(`${getModuleName(selectedReportType)} permissions added successfully`)
     }
-
-    const userPerms = updatedPermissions.filter((p) => p.userId === selectedUser.id)
-    console.log("[v0] All permissions for user", selectedUser.name, "after save:")
-    userPerms.forEach((p) => {
-      console.log(
-        `  - ${getModuleName(p.reportType)}: View=${p.canView}, Create=${p.canCreate}, Edit=${p.canEdit}, Delete=${p.canDelete}`,
-      )
-    })
-
-    console.log("[v0] Total permissions in array:", updatedPermissions.length)
 
     setPermissions(updatedPermissions)
     localStorage.setItem("userPermissions", JSON.stringify(updatedPermissions))
+
+    const moduleName = getModuleName(selectedReportType)
+    const courtName =
+      selectedReportType === "bail" && selectedCourt ? ` - ${courts.find((c) => c.id === selectedCourt)?.name}` : ""
+
+    toast.success(
+      `${moduleName}${courtName} permissions ${existingIndex >= 0 ? "updated" : "added"} for ${selectedUser.name}`,
+    )
 
     setIsDialogOpen(false)
     resetForm()
@@ -250,19 +236,11 @@ export default function AccessControlPage() {
   }
 
   const openEditDialog = (user: User, reportType: string, courtId?: string) => {
-    console.log("[v0] ===== OPENING DIALOG =====")
-    console.log("[v0] Button clicked for module:", reportType)
-    console.log("[v0] User:", user.name, user.id)
-    console.log("[v0] Court ID:", courtId)
+    const existing = getUserPermissions(user.id, reportType, courtId)
 
     setSelectedUser(user)
     setSelectedReportType(reportType)
     setSelectedCourt(courtId || "")
-
-    const existing = getUserPermissions(user.id, reportType, courtId)
-
-    console.log("[v0] Looking for existing permission with:", { userId: user.id, reportType, courtId })
-    console.log("[v0] Found existing permission:", existing)
 
     if (existing) {
       setPermissionForm({
@@ -280,11 +258,7 @@ export default function AccessControlPage() {
       })
     }
 
-    setTimeout(() => {
-      console.log("[v0] Dialog opening with selectedReportType:", reportType)
-      console.log("[v0] Module name will be:", getModuleName(reportType))
-      setIsDialogOpen(true)
-    }, 50)
+    setIsDialogOpen(true)
   }
 
   const getRepositoryByCode = (code: string) => {
@@ -600,16 +574,7 @@ export default function AccessControlPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => {
-                                        console.log("[v0] Clicked Grant/Edit for:", {
-                                          user: user.name,
-                                          module: module.name,
-                                          moduleType: module.type,
-                                          court: court.name,
-                                          courtId: court.id,
-                                        })
-                                        openEditDialog(user, module.type, court.id)
-                                      }}
+                                      onClick={() => openEditDialog(user, module.type, court.id)}
                                     >
                                       {perm ? "Edit" : "Grant"}
                                     </Button>
@@ -657,18 +622,7 @@ export default function AccessControlPage() {
                                 )}
                               </TableCell>
                               <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    console.log("[v0] Clicked Grant/Edit for:", {
-                                      user: user.name,
-                                      module: module.name,
-                                      moduleType: module.type,
-                                    })
-                                    openEditDialog(user, module.type)
-                                  }}
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(user, module.type)}>
                                   {perm ? "Edit" : "Grant"}
                                 </Button>
                               </TableCell>
