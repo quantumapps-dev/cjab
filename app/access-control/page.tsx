@@ -107,6 +107,8 @@ export default function AccessControlPage() {
     canDelete: false,
   })
 
+  const [activeUserTabs, setActiveUserTabs] = useState<Record<string, string>>({})
+
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -200,6 +202,20 @@ export default function AccessControlPage() {
 
   const getRepositoryByCode = (code: string) => {
     return repositories.find((r) => r.code === code)
+  }
+
+  const getActiveTab = (userId: string) => {
+    if (activeUserTabs[userId]) {
+      return activeUserTabs[userId]
+    }
+    return repositories.length > 0 ? repositories[0]?.code : "users"
+  }
+
+  const setActiveTab = (userId: string, tabValue: string) => {
+    setActiveUserTabs((prev) => ({
+      ...prev,
+      [userId]: tabValue,
+    }))
   }
 
   return (
@@ -431,7 +447,11 @@ export default function AccessControlPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue={repositories.length > 0 ? repositories[0]?.code : "users"} className="w-full">
+                  <Tabs
+                    value={getActiveTab(user.id)}
+                    onValueChange={(value) => setActiveTab(user.id, value)}
+                    className="w-full"
+                  >
                     <TabsList className="inline-flex h-auto flex-wrap w-full justify-start gap-1 bg-transparent p-0">
                       {repositories.map((repo) => (
                         <TabsTrigger
