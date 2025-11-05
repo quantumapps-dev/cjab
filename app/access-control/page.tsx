@@ -304,7 +304,7 @@ export default function AccessControlPage() {
   }
 
   const getModuleName = (moduleType: string) => {
-    if (moduleType === "users") return "User Management"
+    if (moduleType === "users") return "User Administration"
     if (moduleType === "county-config") return "County Configuration"
     const repo = getRepositoryByCode(moduleType)
     return repo ? repo.name : moduleType
@@ -312,7 +312,7 @@ export default function AccessControlPage() {
 
   const allModules = [
     ...repositories.map((r) => ({ type: r.code, name: r.name, isRepository: true })),
-    { type: "users", name: "User Management", isRepository: false },
+    { type: "users", name: "User Administration", isRepository: false },
     { type: "county-config", name: "County Configuration", isRepository: false },
   ]
 
@@ -396,7 +396,7 @@ export default function AccessControlPage() {
                           {repo.name}
                         </SelectItem>
                       ))}
-                      <SelectItem value="users">User Management</SelectItem>
+                      <SelectItem value="users">User Administration</SelectItem>
                       <SelectItem value="county-config">County Configuration</SelectItem>
                     </SelectContent>
                   </Select>

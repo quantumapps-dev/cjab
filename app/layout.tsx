@@ -21,7 +21,6 @@ export const metadata: Metadata = {
   title: "CJAB - Criminal Justice Advisory Board",
   description:
     "Secure document management system for criminal justice with role-based access control and AI-powered summarization",
-    generator: 'v0.app'
 }
 
 export default function RootLayout({
